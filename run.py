@@ -39,57 +39,6 @@ def fill_urls(num: int):
     return links
 
 
-def parse_topic(link):
-    dataframe = []
-    while True:
-        try:
-            page = requests.get('https://forum.ykt.ru'+link, headers={'User-Agent': random.choice(agents_list)})
-            if page.status_code == 200:
-                soup = bs(page.text, 'html.parser')
-                if soup is not None:
-                    if soup.find('div', class_='f-view_topic-text emojify') is not None:
-                        content = soup.find('div', class_='f-view_topic-text emojify').text.strip()
-                        title = soup.find('div', class_='f-view_title emojify').text.strip()
-                        n_likes = soup.find('div', class_='f-view_like_count f-comment_like_count f-js_like_count').text
-                        date = soup.find('time', class_='f-view_createdate')['datetime'][:19]
-                        views = soup.find('span', class_='post-views').text
-                        n_comments = soup.find('span', class_='f-comments_count').text
-                        dataframe.append((date, link[-7:], views, n_likes, n_comments, title, content))
-                        return dataframe
-        except requests.exceptions.ConnectionError:
-            time.sleep(0.1)
-            print('trying to download data again:', 'https://forum.ykt.ru'+link)
-            continue
-        break
-
-
-def parse_comments(link):
-    dataframe = []
-    while True:
-        try:
-            page = requests.get('https://forum.ykt.ru'+link, headers={'User-Agent': random.choice(agents_list)})
-            if page.status_code == 200:
-                soup = bs(page.text, 'html.parser')
-                if soup is not None:
-                    if soup.find('div', class_='f-comments_content topic-comments yui-block alone') is not None:
-                        comments = soup.find_all('li', class_='f-comments_item')
-                        for comm in comments:
-                            content = comm.find('div', class_='f-comment_text').text.replace('\n', ' ').strip()
-                            content = re.sub(r'\s{2,}', ' ', content)
-                            date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(comm.find('div', class_='f-comment')['data-date']) / 1000))
-                            n_likes = comm.find('span', class_='f-comment_like_count f-js_like_count').text.strip()
-                            dataframe.append((date, link[-7:], n_likes, content))
-                        return dataframe
-                    else:
-                        print('down')
-                        continue
-        except requests.exceptions.ConnectionError:
-            time.sleep(0.1)
-            print('trying to download data again:', 'https://forum.ykt.ru'+link)
-            continue
-        break
-
-
 def topic_n_comments(link):
     topic = []
     comment = []
